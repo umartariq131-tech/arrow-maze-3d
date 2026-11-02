@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arrow Maze 3D</title>
+<style>
+:root{--bg:#07172d;--panel:#102745;--cyan:#34d8ff;--gold:#ffcf46;--ink:#dff6ff}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Arial;background:radial-gradient(ellipse at 50% 0%,#174b78,#07172d 58%);color:var(--ink);min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px clamp(12px,4vw,36px);border-bottom:1px solid #ffffff20;background:#061326aa;position:sticky;top:0;z-index:3}
+.logo{font-weight:1000;letter-spacing:1px;font-size:clamp(18px,3vw,28px);color:white;text-shadow:0 0 18px #29cfff}.logo span{color:var(--gold)}
+.stats{display:flex;gap:9px;align-items:center}.pill{background:#163454;border:1px solid #3a6c91;border-radius:999px;padding:7px 12px;font-weight:800}
+main{max-width:1100px;margin:auto;padding:22px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.top h1{margin:0;font-size:clamp(22px,4vw,34px)}.top p{margin:5px 0;color:#a9c8e5}
+.controls{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:10px 15px;font-weight:900;cursor:pointer;color:#06172a;background:linear-gradient(135deg,#56e3ff,#28a9f4);box-shadow:0 4px 0 #12679a;transition:.12s}.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #12679a}.btn.secondary{background:#1b3859;color:#eaf8ff;box-shadow:0 4px 0 #0a1b30;border:1px solid #4a6e91}.layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;margin-top:20px}.board-wrap{background:linear-gradient(145deg,#16385d,#091b33);border:1px solid #4c7fa8;border-radius:22px;padding:clamp(10px,2vw,20px);box-shadow:0 20px 50px #0007;position:relative}
+#board{width:min(100%,650px);aspect-ratio:1;margin:auto;display:grid;gap:4px;padding:7px;background:linear-gradient(145deg,#0b1e36,#1c4267);border-radius:15px;box-shadow:inset 0 0 30px #0008;touch-action:manipulation}
+.cell{min-width:0;min-height:0;position:relative;border-radius:7px;background:linear-gradient(145deg,#21496e,#102c4b);border:1px solid #3c6488;box-shadow:inset 1px 1px 2px #9beaff20,2px 3px 0 #06182b;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cell.empty{background:transparent;border-color:transparent;box-shadow:none}
+.arrow{width:88%;height:88%;border:0;cursor:pointer;background:linear-gradient(145deg,#63e9ff,#16a6f1);clip-path:polygon(50% 0%,88% 38%,67% 38%,67% 100%,33% 100%,33% 38%,12% 38%);filter:drop-shadow(0 3px 1px #04172b);transition:transform .18s,filter .18s;transform:rotate(var(--rot,0deg));position:relative}
+.arrow:hover{filter:brightness(1.2) drop-shadow(0 0 8px #3be3ff)}
+.arrow.blocked{background:linear-gradient(145deg,#ffdc6a,#f58a27)}.arrow.hinted{filter:brightness(1.5) drop-shadow(0 0 12px #ffe35d)}
+.cell.gone{animation:vanish .22s forwards;pointer-events:none}@keyframes vanish{to{transform:scale(.2) rotate(40deg);opacity:0}}
+.board-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 4px 0;color:#b9d5ec;font-size:13px}
+.side{background:#0d2440;border:1px solid #345d83;border-radius:20px;padding:17px;box-shadow:0 15px 30px #0003}.side h2{font-size:18px;margin:0 0 12px}.progress{height:10px;background:#06162a;border-radius:99px;overflow:hidden;margin:9px 0 16px}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#32d5ff,#a5ffb7);transition:width .3s}.mission{background:#173657;border-radius:13px;padding:12px;margin:12px 0}.mission strong{color:var(--gold)}.side .btn{width:100%;margin-top:8px}.hint-text{min-height:44px;color:#a9c9e6;font-size:13px;line-height:1.4;margin-top:12px}
+.overlay{position:absolute;inset:0;background:#06172bdc;border-radius:22px;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;z-index:2}.overlay.show{display:flex}.overlay-card{max-width:330px}.overlay h2{font-size:32px;color:var(--gold);margin:0 0 8px}.overlay p{color:#d5efff}
+footer{text-align:center;color:#7fa4c6;font-size:12px;margin-top:20px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr;gap:8px}.side h2,.side .progress,.mission,.hint-text{grid-column:span 2}.side .btn{margin:0}.board-wrap{padding:8px}#board{gap:3px}.stats{gap:5px}.pill{padding:6px 9px;font-size:12px}}
+</style>
+</head>
+<body>
+<header><div class="logo">ARROW <span>MAZE 3D</span></div><div class="stats"><div class="pill">🪙 <span id="coins">100</span></div><div class="pill">LEVEL <span id="levelTop">1</span></div></div></header>
+<main>
+<div class="top"><div><h1>Clear the maze!</h1><p>Tap arrows that can escape the board. Think ahead.</p></div><div class="controls"><button class="btn secondary" id="restart">↻ Restart</button><button class="btn secondary" id="daily">☀ Daily</button></div></div>
+<div class="layout">
+<section class="board-wrap">
+<div id="board" aria-label="Arrow maze game board"></div>
+<div class="board-foot"><span id="moves">Moves: 0</span><span id="remaining">Arrows: 0</span><span id="level">Level 1</span></div>
+<div class="overlay" id="overlay"><div class="overlay-card"><h2 id="overTitle">Level Clear!</h2><p id="overText">Great job! Ready for the next maze?</p><button class="btn" id="next">Next Level →</button></div></div>
+</section>
+<aside class="side"><h2>🧠 Mission</h2><div class="progress"><span id="progress"></span></div><div class="mission">Remove every arrow to clear the maze.<br><strong>Tip:</strong> An arrow can leave only if its path is open.</div><button class="btn" id="hint">💡 Hint (−10 coins)</button><button class="btn secondary" id="shuffle">New Maze</button><div class="hint-text" id="hintText">Use hints if you get stuck. You earn coins by completing levels.</div></aside>
+</div>
+<footer>Arrow Maze 3D • A lightweight browser puzzle • No account required</footer>
+</main>
+<script>
+(()=>{
+const board=document.querySelector('#board'),coinsEl=document.querySelector('#coins'),movesEl=document.querySelector('#moves'),remEl=document.querySelector('#remaining'),levelEl=document.querySelector('#level'),levelTop=document.querySelector('#levelTop'),progress=document.querySelector('#progress'),overlay=document.querySelector('#overlay'),overTitle=document.querySelector('#overTitle'),overText=document.querySelector('#overText'),next=document.querySelector('#next'),hintText=document.querySelector('#hintText');
+let level=1,coins=100,moves=0,N=7,arrows=[],seed=Date.now(),daily=false;
+const dirs=[{x:0,y:-1,rot:0,icon:'↑'},{x:1,y:0,rot:90,icon:'→'},{x:0,y:1,rot:180,icon:'↓'},{x:-1,y:0,rot:270,icon:'←'}];
+function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+function makeMaze(){
+ N=Math.min(7+Math.floor((level-1)/2),10);let list=[],occupied=new Set();
+ // Generate arrows in randomized paths, then keep them all on grid. Directions are random;
+ // gameplay path checks the cells ahead, which naturally creates a solvable puzzle.
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(rand()<(level<3?.68:.76)){
+ let d=Math.floor(rand()*4);list.push({x,y,d,id:list.length,alive:true});occupied.add(x+','+y);
+ }
+ if(list.length<12){for(let i=0;i<20;i++){let x=Math.floor(rand()*N),y=Math.floor(rand()*N),d=Math.floor(rand()*4);if(!occupied.has(x+','+y)){list.push({x,y,d,id:list.length,alive:true});occupied.add(x+','+y)}}}
+ arrows=list;moves=0;hintText.textContent='Tap a glowing blue arrow if its path to the edge is clear.';overlay.classList.remove('show');render();
+}
+function canExit(a){let {x,y}=a,d=dirs[a.d];for(let cx=x+d.x,cy=y+d.y;cx>=0&&cy>=0&&cx<N&&cy<N;cx+=d.x,cy+=d.y){if(arrows.some(b=>b.alive&&b.id!==a.id&&b.x===cx&&b.y===cy))return false}return true}
+function render(){
+ board.style.gridTemplateColumns=`repeat(${N},1fr)`;board.innerHTML='';
+ let lookup=new Map(arrows.filter(a=>a.alive).map(a=>[a.x+','+a.y,a]));
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){let cell=document.createElement('div');cell.className='cell';let a=lookup.get(x+','+y);if(a){let b=document.createElement('button');b.className='arrow'+(canExit(a)?'':' blocked');b.style.setProperty('--rot',dirs[a.d].rot+'deg');b.setAttribute('aria-label','Arrow '+dirs[a.d].icon);b.title=canExit(a)?'Clear path — tap to remove':'Blocked — move another arrow first';b.onclick=()=>tap(a);cell.append(b)}else cell.classList.add('empty');board.append(cell)}
+ let alive=arrows.filter(a=>a.alive).length;movesEl.textContent='Moves: '+moves;remEl.textContent='Arrows: '+alive;levelEl.textContent='Level '+level;levelTop.textContent=level;coinsEl.textContent=coins;progress.style.width=(100*(arrows.length-alive)/Math.max(arrows.length,1))+'%';
+}
+function tap(a){if(!a.alive)return;if(!canExit(a)){hintText.textContent='This arrow is blocked. Clear the arrows in front of it first.';return}
+ a.alive=false;moves++;coins+=1;render();if(!arrows.some(a=>a.alive)){coins+=20;coinsEl.textContent=coins;overTitle.textContent='🎉 Level Clear!';overText.textContent='Maze solved in '+moves+' moves. +20 bonus coins!';next.textContent='Next Level →';overlay.classList.add('show')}}
+function hint(){if(coins<10){hintText.textContent='Not enough coins. Complete a level to earn more!';return}let a=arrows.find(a=>a.alive&&canExit(a));if(!a){hintText.textContent='No arrow can exit right now. Try a different maze.';return}coins-=10;render();let idx=a.y*N+a.x,el=board.children[idx]?.querySelector('.arrow');if(el){el.classList.add('hinted');el.scrollIntoView({block:'nearest',behavior:'smooth'})}hintText.textContent='Highlighted arrow can leave the board. Tap it!'}
+document.querySelector('#restart').onclick=()=>{seed=Date.now();makeMaze()};document.querySelector('#shuffle').onclick=()=>{seed=(Date.now()^Math.floor(Math.random()*999999));makeMaze()};document.querySelector('#hint').onclick=hint;
+document.querySelector('#daily').onclick=()=>{daily=true;level=1;seed=Number(new Date().toISOString().slice(0,10).replaceAll('-',''));makeMaze();hintText.textContent='Daily Challenge: same maze seed for today. Solve it!';document.querySelector('#daily').textContent='☀ Daily Challenge'};
+next.onclick=()=>{level++;daily=false;seed=(Date.now()^level*99991);makeMaze()};makeMaze();
+})();
+</script>
+</body></html>
